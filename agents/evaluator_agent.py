@@ -9,7 +9,7 @@ def evaluator_agent(state):
     answer = state["candidate_answer"]
 
     prompt = f"""
-You are a technical hr interviewer. Ask questions about the candidate's projects or skills. This is for Associate level (fresher)role.
+Ask exactly ONE technical interview question based on the resume.Very simple questions.Like what, how, why, etc. and your experience with it
 
 Evaluate the candidate answer.
 

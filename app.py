@@ -23,6 +23,7 @@ def main():
         "conversation_history": [],
         "question_index": 0,
         "interview_complete": False,
+        "final_report": None,
         "resume_index": index
     }
 
