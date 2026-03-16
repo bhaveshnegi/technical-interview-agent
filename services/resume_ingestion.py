@@ -1,40 +1,32 @@
-import chromadb
-
-from llama_index.core import VectorStoreIndex
 from llama_index.core import SimpleDirectoryReader
+
+from llama_index.core.node_parser import SentenceSplitter
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+from llama_index.core.ingestion import IngestionPipeline
+
+import chromadb
 from llama_index.vector_stores.chroma import ChromaVectorStore
-from llama_index.core import StorageContext
+from llama_index.core import VectorStoreIndex
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 
+def load_documents(directory):
+    reader = SimpleDirectoryReader(input_dir=directory)
+    return reader.load_data()
 
-def build_resume_index():
-
-    # Load PDF resumes
-    documents = SimpleDirectoryReader("../datas/resumes").load_data()
-
-    # HuggingFace embedding model
-    embed_model = HuggingFaceEmbedding(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
+def get_pipeline(vector_store=None):
+    return IngestionPipeline(
+        transformations=[
+            SentenceSplitter(chunk_size=512, chunk_overlap=20),
+            HuggingFaceEmbedding(model_name="BAAI/bge-small-en-v1.5"),
+        ],
+        vector_store=vector_store,
     )
 
-    # Chroma client
-    chroma_client = chromadb.PersistentClient(path="./vector_store")
+def get_chroma_vector_store(path="./vector_store", collection_name="resume_collection"):
+    db = chromadb.PersistentClient(path=path)
+    chroma_collection = db.get_or_create_collection(collection_name)
+    return ChromaVectorStore(chroma_collection=chroma_collection)
 
-    chroma_collection = chroma_client.get_or_create_collection(
-        name="resume_collection"
-    )
-
-    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-
-    storage_context = StorageContext.from_defaults(
-        vector_store=vector_store
-    )
-
-    # Build index
-    index = VectorStoreIndex.from_documents(
-        documents,
-        storage_context=storage_context,
-        embed_model=embed_model
-    )
-
-    return index
+def get_index(vector_store, embed_model_name="BAAI/bge-small-en-v1.5"):
+    embed_model = HuggingFaceEmbedding(model_name=embed_model_name)
+    return VectorStoreIndex.from_vector_store(vector_store, embed_model=embed_model)

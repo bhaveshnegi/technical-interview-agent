@@ -1,12 +1,15 @@
-def query_resume(index, query):
+from services.resume_ingestion import get_index
+from utils.llm import get_llm
 
-    retriever = index.as_retriever(similarity_top_k=3)
+async def resume_retriever_tool():
+    index = await get_index()
+    llm = get_llm()
 
-    nodes = retriever.retrieve(query)
-
-    results = []
-
-    for node in nodes:
-        results.append(node.text)
-
-    return "\n\n".join(results)
+    query_engine = index.as_query_engine(llm=llm)
+    
+    question = "Analyze the resume and tell me the key skills of Bhavesh Negi."
+    print(f"Querying: {question}")
+    response = query_engine.query(question)
+    
+    print("\nResponse:")
+    print(response)

@@ -1,16 +1,18 @@
 from graphs.interview_graph import build_graph
-from services.resume_ingestion import ingest_resume
-
+from services.resume_ingestion import get_chroma_vector_store, get_index
 
 def main():
 
-    print("Ingesting resume from datas/resumes...")
-    index, resume_text = ingest_resume()
+    print("Loading existing resume index...")
+
+    vector_store = get_chroma_vector_store("vector_store")
+
+    index = get_index(vector_store)
 
     graph = build_graph()
 
     state = {
-        "resume_text": resume_text,
+        "resume_text": "",
         "skills": [],
         "projects": [],
         "question_list": [],

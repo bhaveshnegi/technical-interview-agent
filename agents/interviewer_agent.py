@@ -1,5 +1,5 @@
 from utils.llm import get_llm
-from tools.resume_retriever_tool import retrieve_resume_context
+from tools.resume_retriever_tool import resume_retriever_tool
 
 
 def interviewer_agent(state):
@@ -8,7 +8,7 @@ def interviewer_agent(state):
 
     index = state["resume_index"]
 
-    context = retrieve_resume_context(
+    context = resume_retriever_tool(
         index,
         "candidate projects and skills"
     )
