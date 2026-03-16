@@ -1,30 +1,36 @@
 from utils.llm import get_llm
-from tools.resume_retriever_tool import resume_retriever_tool
 
 
 def interviewer_agent(state):
 
     llm = get_llm()
 
-    index = state["resume_index"]
-
-    context = resume_retriever_tool(
-        index,
-        "candidate projects and skills"
-    )
-
+    skills = state["skills"]
+    projects = state["projects"]
     history = state["conversation_history"]
 
     prompt = f"""
-You are a senior technical interviewer.
+You are a technical hr interviewer. Ask questions about the candidate's projects or skills. This is for Associate level (fresher)role.
 
-Candidate resume context:
-{context}
+Candidate Skills:
+{skills}
+
+Candidate Projects:
+{projects}
 
 Previous conversation:
 {history}
 
-Ask ONE technical interview question based on the resume.
+Ask exactly ONE technical interview question based on the resume.
+
+For example:
+If candidate has mentioned "Python" in skills, ask "Tell me about your experience with Python."
+
+Rules:
+- Ask only ONE question.
+- Do NOT add follow-up questions.
+- Do NOT add explanations.
+- Return only the question text.
 """
 
     response = llm.invoke(prompt)

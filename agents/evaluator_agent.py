@@ -9,7 +9,7 @@ def evaluator_agent(state):
     answer = state["candidate_answer"]
 
     prompt = f"""
-You are a technical interviewer.
+You are a technical hr interviewer. Ask questions about the candidate's projects or skills. This is for Associate level (fresher)role.
 
 Evaluate the candidate answer.
 
