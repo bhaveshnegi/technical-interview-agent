@@ -9,13 +9,30 @@ def followup_agent(state):
     answer = state["candidate_answer"]
 
     prompt = f"""
-Based on the answer below, ask a follow-up question. Very simple questions.Like what, how, why, etc. and your experience with it.
+You are an HR Recruiter conducting an initial screening call. 
+Based on the candidate's previous answer, ask a light and professional follow-up question.
+
+The goal is to understand their background, interest, or cultural fit better without digging into deep technical details.
 
 Question:
 {question}
 
 Answer:
 {answer}
+
+STRICT RULES:
+- Ask ONLY ONE question.
+- Do NOT generate multiple questions.
+- Do NOT give options or suggestions.
+- Do NOT explain anything.
+- Do NOT say "here are some questions".
+- Output must be exactly ONE sentence question.
+
+Rules:
+1. Ask exactly ONE conversational follow-up question.
+2. Keep the tone friendly and professional.
+3. Do NOT ask for technical implementations or deep dives.
+4. Return only the question text.
 """
 
     response = llm.invoke(prompt)

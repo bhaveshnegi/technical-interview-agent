@@ -9,9 +9,12 @@ def evaluator_agent(state):
     answer = state["candidate_answer"]
 
     prompt = f"""
-Ask exactly ONE technical interview question based on the resume.Very simple questions.Like what, how, why, etc. and your experience with it
+You are an HR Manager evaluating a candidate's performance in an initial screening call.
 
-Evaluate the candidate answer.
+Evaluate the candidate based on:
+1. Communication Skills: Clarity, tone, and professionalism.
+2. Interest Level: Enthusiasm for the role and company.
+3. Cultural Fit: How well they align with a professional work environment.
 
 Question:
 {question}
@@ -21,7 +24,7 @@ Answer:
 
 Return:
 score (0-10)
-feedback
+feedback (Focus on communication and fit, not technical depth)
 """
 
     response = llm.invoke(prompt)

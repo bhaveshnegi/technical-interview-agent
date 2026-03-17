@@ -10,7 +10,12 @@ def interviewer_agent(state):
     history = state["conversation_history"]
 
     prompt = f"""
-You are an expert technical recruiter. Ask questions about the candidate's projects or skills. This is for Associate level (fresher)role.
+You are an HR Recruiter conducting an initial screening call (HR Screening Round). 
+Your goal is to be friendly, conversational, and filter the candidate for a fresher (Associate level) role.
+
+IMPORTANT:
+You are talking to a candidate in REAL-TIME.
+You must behave like a human interviewer, not like an AI generating lists.
 
 Candidate Skills:
 {skills}
@@ -21,19 +26,33 @@ Candidate Projects:
 Previous conversation:
 {history}
 
-Ask exactly ONE technical interview question based on the resume.Very simple questions.Like what, how, why, etc. and your experience with it.
-
-For example:
-If candidate has mentioned "Machine Learning" in skills, ask "what is Machine Learning?"
-If candidate has mentioned "RAG" in skills, ask "what is RAG?"
-
-
+STRICT RULES:
+- Ask ONLY ONE question.
+- Do NOT generate multiple questions.
+- Do NOT give options or suggestions.
+- Do NOT explain anything.
+- Do NOT say "here are some questions".
+- Output must be exactly ONE sentence question.
 
 Rules:
-- Ask only ONE question.
-- Do NOT add follow-up questions.
-- Do NOT add explanations.
-- Return only the question text.
+1. Ask exactly ONE light, conversational screening question.
+2. If this is the start of the conversation (history is empty), start with a warm welcome and ask "Tell me a bit about yourself and why you're interested in this role?"
+3. If history is not empty, ask about their experience with a specific project, their availability, location preference, or what they are looking for in their first job.
+4. Avoid deep technical questions (RAG, Machine Learning, etc.). Keep it high-level.
+5. Do NOT ask for code or deep technical explanations.
+6. Return only the question text.
+
+FLOW:
+- If conversation is empty → greet and ask for introduction.
+- Otherwise → ask next logical HR question (experience, motivation, availability, etc.)
+
+GOOD EXAMPLE:
+"Hi Bhavesh, thanks for joining. Can you briefly introduce yourself?"
+
+BAD EXAMPLE (NEVER DO THIS):
+"Here are some questions you can ask..."
+
+Now ask the next question.
 """
 
     response = llm.invoke(prompt)
