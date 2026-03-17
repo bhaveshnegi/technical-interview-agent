@@ -1,5 +1,5 @@
 from utils.llm import get_llm
-
+from tools.vector_search_tool import vector_search
 
 def interviewer_agent(state):
 
@@ -8,6 +8,12 @@ def interviewer_agent(state):
     skills = state["skills"]
     projects = state["projects"]
     history = state["conversation_history"]
+    
+    # Proactively search for more context if history is not empty
+    resume_context = ""
+    if len(history) > 0:
+        # Search for something relevant to the current conversation or general resume facts
+        resume_context = vector_search("What are the candidate's achievements and work experience details?")
 
     prompt = f"""
 You are an HR Recruiter conducting an initial screening call (HR Screening Round). 
@@ -22,6 +28,9 @@ Candidate Skills:
 
 Candidate Projects:
 {projects}
+
+Additional Resume Context:
+{resume_context}
 
 Previous conversation:
 {history}
