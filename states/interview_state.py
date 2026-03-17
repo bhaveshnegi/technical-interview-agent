@@ -19,6 +19,7 @@ class InterviewState(TypedDict):
     # evaluation
     score: Optional[int]
     feedback: Optional[str]
+    evaluation: Optional[Any]
 
     # conversation memory
     conversation_history: List[str]

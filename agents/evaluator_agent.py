@@ -1,10 +1,11 @@
 from utils.llm import get_llm
 import json
 import re
-from tools.scoring_tool import hr_scoring_tool
+from mcp_client import get_mcp_client
 
-def evaluator_agent(state):
+async def evaluator_agent(state):
     llm = get_llm()
+    client = get_mcp_client()
 
     question = state["current_question"]
     answer = state["candidate_answer"]
@@ -62,8 +63,9 @@ Return the evaluation in the following JSON format ONLY:
             "cultural_fit_feedback": "Error"
         }
 
-    # Use the scoring tool
-    scorecard = hr_scoring_tool(eval_data)
+    # Use the scoring tool via MCP
+    mcp_response = await client.call_tool("hr_scoring_tool", {"interview_data": eval_data})
+    scorecard = json.loads(mcp_response.content[0].text) if mcp_response.content else {}
 
     print("\n--- HR Screening Scorecard ---")
     for category, result in scorecard.items():

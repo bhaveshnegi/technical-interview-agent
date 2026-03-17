@@ -1,7 +1,7 @@
 from utils.llm import get_llm
 
 
-def followup_agent(state):
+async def followup_agent(state):
 
     llm = get_llm()
 

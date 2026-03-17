@@ -39,12 +39,18 @@ def get_llm():
             os.environ["HF_TOKEN"] = hf_token
             os.environ["HUGGINGFACE_API_TOKEN"] = hf_token
 
+        # llm = HuggingFaceEndpoint(
+        #     repo_id="mistralai/Mistral-7B-Instruct-v0.2",
+        #     huggingfacehub_api_token=hf_token,
+        #     temperature=0.1,
+        #     max_new_tokens=1024,
+        # )
         llm = HuggingFaceEndpoint(
-            repo_id="mistralai/Mistral-7B-Instruct-v0.2",
-            huggingfacehub_api_token=hf_token,
-            temperature=0.1,
-            max_new_tokens=1024,
+            repo_id="Qwen/Qwen3.5-27B:novita",
+            temperature=0.3,
+            max_new_tokens=50,
+            huggingfacehub_api_token=os.getenv("HF_TOKEN"),
         )
         model_base = ChatHuggingFace(llm=llm)
-        print(f"--- LLM initialized with Hugging Face (Mistral-7B) ---")
+        print(f"--- LLM initialized with Hugging Face (Qwen/Qwen2.5-Coder-32B-Instruct) ---")
         return model_base

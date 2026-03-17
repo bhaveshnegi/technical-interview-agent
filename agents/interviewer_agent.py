@@ -1,9 +1,10 @@
 from utils.llm import get_llm
-from tools.vector_search_tool import vector_search
+from mcp_client import get_mcp_client
 
-def interviewer_agent(state):
+async def interviewer_agent(state):
 
     llm = get_llm()
+    client = get_mcp_client()
 
     skills = state["skills"]
     projects = state["projects"]
@@ -13,7 +14,9 @@ def interviewer_agent(state):
     resume_context = ""
     if len(history) > 0:
         # Search for something relevant to the current conversation or general resume facts
-        resume_context = vector_search("What are the candidate's achievements and work experience details?")
+        # Use MCP tool instead of direct import
+        mcp_response = await client.call_tool("vector_search", {"query": "What are the candidate's achievements and work experience details?"})
+        resume_context = mcp_response.content[0].text if mcp_response.content else ""
 
     prompt = f"""
 You are an HR Recruiter conducting an initial screening call (HR Screening Round). 
@@ -70,6 +73,9 @@ Now ask the next question.
 
     print("\nInterviewer:", question)
 
+    # Use await for input in a real async environment if needed, 
+    # but for study/CLI tool input() is fine although it blocks.
+    # In a full async app, we'd use an async input handler.
     answer = input("\nCandidate: ")
 
     state["current_question"] = question
