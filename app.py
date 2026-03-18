@@ -1,19 +1,10 @@
 import asyncio
-from graphs.interview_graph import build_graph
-from services.resume_ingestion import get_chroma_vector_store, get_index
+from orchestrator import orchestrator
+from nodes.resume_analyzer_node import resume_analyzer_node
 from mcp_client import get_mcp_client
 
-async def main():
-
-    print("Loading existing resume index...")
-
-    vector_store = get_chroma_vector_store("vector_store")
-
-    index = get_index(vector_store)
-
-    graph = build_graph()
-
-    state = {
+def init_state():
+    return {
         "resume_text": "",
         "skills": [],
         "projects": [],
@@ -27,17 +18,26 @@ async def main():
         "question_index": 0,
         "interview_complete": False,
         "final_report": None,
-        "resume_index": index
+        "last_action": None
     }
 
-    # Eagerly connect to MCP server BEFORE graph starts.
-    # This avoids anyio cancel-scope violations that occur when the client
-    # lazy-connects from inside a LangGraph sub-task (asyncio.create_task).
+async def main():
+    print("Initializing Interview System...")
+
+    state = init_state()
+
     client = get_mcp_client()
     await client.connect()
 
     try:
-        await graph.ainvoke(state)
+        # Step 1: Analyze Resume
+        state = await resume_analyzer_node(state)
+
+        # Step 2: Start Orchestrator
+        final_state = await orchestrator(state)
+        
+        print("\nInterview completed successfully.")
+
     finally:
         await client.close()
 

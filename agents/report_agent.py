@@ -30,9 +30,5 @@ Be professional and objective.
     response = llm.invoke(prompt)
     report = response.content
 
-    print("\n--- FINAL CANDIDATE EVALUATION REPORT ---")
-    print(report)
-    print("------------------------------------------")
-
     state["final_report"] = report
     return state

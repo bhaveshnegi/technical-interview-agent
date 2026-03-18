@@ -27,4 +27,5 @@ class InterviewState(TypedDict):
     # interview progress
     question_index: int
     interview_complete: bool
-    final_report: Optional[str]
+    final_report: Optional[str]
+    last_action: Optional[str]

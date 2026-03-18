@@ -67,13 +67,6 @@ Return the evaluation in the following JSON format ONLY:
     mcp_response = await client.call_tool("hr_scoring_tool", {"interview_data": eval_data})
     scorecard = json.loads(mcp_response.content[0].text) if mcp_response.content else {}
 
-    print("\n--- HR Screening Scorecard ---")
-    for category, result in scorecard.items():
-        if isinstance(result, dict):
-            print(f"{category}: Score {result['score']}/10 - {result['feedback']}")
-        else:
-            print(f"{category}: {result}")
-
     state["evaluation"] = scorecard
 
     return state

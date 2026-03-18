@@ -36,21 +36,5 @@ Rules:
 """
 
     response = llm.invoke(prompt)
-
     followup = response.content
-
-    print("\nFollow-up Question:", followup)
-
-    answer = input("\nCandidate: ")
-
-    state["candidate_answer"] = answer
-    
-    # Record follow-up interaction in history
-    state["conversation_history"].append(
-        f"Follow-up Q: {followup}\nA: {answer}"
-    )
-    
-    # Track every question asked
-    state["question_index"] += 1
-
-    return state
+    return followup

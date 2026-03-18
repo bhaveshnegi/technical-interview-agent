@@ -13,8 +13,6 @@ async def interviewer_agent(state):
     # Proactively search for more context if history is not empty
     resume_context = ""
     if len(history) > 0:
-        # Search for something relevant to the current conversation or general resume facts
-        # Use MCP tool instead of direct import
         mcp_response = await client.call_tool("vector_search", {"query": "What are the candidate's achievements and work experience details?"})
         resume_context = mcp_response.content[0].text if mcp_response.content else ""
 
@@ -68,24 +66,5 @@ Now ask the next question.
 """
 
     response = llm.invoke(prompt)
-
     question = response.content
-
-    print("\nInterviewer:", question)
-
-    # Use await for input in a real async environment if needed, 
-    # but for study/CLI tool input() is fine although it blocks.
-    # In a full async app, we'd use an async input handler.
-    answer = input("\nCandidate: ")
-
-    state["current_question"] = question
-    state["candidate_answer"] = answer
-
-    state["conversation_history"].append(
-        f"Q: {question}\nA: {answer}"
-    )
-
-    # Track every question asked
-    state["question_index"] += 1
-
-    return state
+    return question
