@@ -1,18 +1,41 @@
 import os
 import shutil
 import uuid
+import asyncio
 from typing import Dict
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from orchestrator import handle_next_step
-from nodes.resume_analyzer_node import resume_analyzer_node
+from agents.resume_analyzer_agent import resume_analyzer_agent
+from services.resume_ingestion import (
+    load_documents, 
+    get_chroma_vector_store, 
+    get_pipeline, 
+    get_index
+)
 from mcp_client import get_mcp_client
 from states.interview_state import InterviewState
 
-app = FastAPI(title="Technical Interview Agent API")
+# Lifecycle management for MCP client to avoid anyio cancel scope issues
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Connect to MCP
+    print("Connecting to MCP server...")
+    client = get_mcp_client()
+    try:
+        await client.connect()
+        print("MCP client connected.")
+        yield
+    finally:
+        # Shutdown: Close MCP
+        print("Closing MCP connection...")
+        await client.close()
+
+app = FastAPI(title="Agent Screening API", lifespan=lifespan)
 
 # Enable CORS
 app.add_middleware(
@@ -22,8 +45,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# In-memory storage for interview states (local development)
-# In production, use Redis or a database
 sessions: Dict[str, InterviewState] = {}
 
 class ChatRequest(BaseModel):
@@ -55,26 +76,45 @@ async def upload_resume(file: UploadFile = File(...)):
 
     session_id = str(uuid.uuid4())
     
-    # Save file locally for ingestion
-    upload_dir = "datas"
+    # 1. Save file locally
+    upload_dir = "datas/resumes"
     os.makedirs(upload_dir, exist_ok=True)
+    # Clear directory to ensure we only analyze ONE resume at a time for this session
+    # (Simple approach for local prototype)
+    for existing_file in os.listdir(upload_dir):
+        file_path = os.path.join(upload_dir, existing_file)
+        try:
+            if os.path.isfile(file_path):
+                os.unlink(file_path)
+        except Exception:
+            pass
+
     file_path = os.path.join(upload_dir, file.filename)
-    
     with open(file_path, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
-    state = init_state()
-    state["resume_text"] = file.filename # Simple track
-    
-    # Initialize MCP
-    client = get_mcp_client()
-    await client.connect()
-    
     try:
-        # 1. Analyze Resume
-        state = await resume_analyzer_node(state)
+        print(f"Ingesting resume: {file.filename}")
+        # 2. Ingest into Vector Store
+        documents = load_documents(upload_dir)
+        vector_store = get_chroma_vector_store("vector_store")
+        pipeline = get_pipeline(vector_store)
+        pipeline.run(documents=documents)
         
-        # 2. Get First Question
+        # 3. Analyze Resume using LLM Agent
+        print("Analyzing resume with LLM Agent...")
+        full_text = "\n".join([doc.text for doc in documents])
+        analysis = await resume_analyzer_agent(full_text)
+        
+        state = init_state()
+        state["resume_text"] = full_text
+        state["skills"] = analysis.get("skills", [])
+        state["projects"] = analysis.get("projects", [])
+        
+        print(f"Extracted Skills: {state['skills']}")
+        print(f"Extracted Projects: {state['projects']}")
+
+        # 4. Get First Question
         state, msg_type, content = await handle_next_step(state)
         
         sessions[session_id] = state
@@ -87,7 +127,7 @@ async def upload_resume(file: UploadFile = File(...)):
             "projects": state["projects"]
         }
     except Exception as e:
-        await client.close()
+        print(f"Error during upload/analysis: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/chat")
