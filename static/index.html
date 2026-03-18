@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technical Interview Agent</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --bg: #0f172a;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        header {
+            padding: 2rem;
+            text-align: center;
+            width: 100%;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 600;
+            background: linear-gradient(to right, #fff, var(--primary-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 1000px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            padding-bottom: 2rem;
+        }
+
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        /* Upload Section */
+        #upload-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--glass-border);
+            border-radius: 20px;
+            padding: 3rem;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 1.5rem;
+        }
+
+        .upload-area:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .btn:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Chat Section */
+        #chat-section {
+            display: none;
+            flex-direction: column;
+            height: 600px;
+        }
+
+        .chat-messages {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            scrollbar-width: thin;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 1rem;
+            border-radius: 16px;
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        .agent-msg {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.08);
+            border-bottom-left-radius: 4px;
+        }
+
+        .user-msg {
+            align-self: flex-end;
+            background: var(--primary);
+            border-bottom-right-radius: 4px;
+        }
+
+        .chat-input {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        input[type="text"] {
+            flex-grow: 1;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            padding: 0.8rem 1rem;
+            color: white;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary);
+        }
+
+        /* Report Section */
+        #report-section {
+            display: none;
+        }
+
+        .report-content {
+            white-space: pre-wrap;
+            font-size: 0.95rem;
+            color: var(--text-dim);
+            background: rgba(0,0,0,0.2);
+            padding: 1.5rem;
+            border-radius: 16px;
+            margin-top: 1rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading-spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Technical Interviewer</h1>
+        <p style="color: var(--text-dim);">AI-Powered Career Screening</p>
+    </header>
+
+    <div class="container">
+        <!-- Step 1: Upload -->
+        <div id="upload-section" class="card">
+            <div class="upload-area" id="drop-zone">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--primary); margin-bottom: 1rem;">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <h3>Upload Your Resume</h3>
+                <p style="color: var(--text-dim); margin-top: 0.5rem;">PDF or TXT files only</p>
+                <input type="file" id="file-input" hidden accept=".pdf,.txt">
+            </div>
+            <button class="btn" id="start-btn">Analyze & Start Interview</button>
+        </div>
+
+        <!-- Step 2: Chat -->
+        <div id="chat-section" class="card">
+            <div class="chat-messages" id="chat-messages"></div>
+            <div class="chat-input">
+                <input type="text" id="user-input" placeholder="Type your answer here...">
+                <button class="btn" id="send-btn">Send</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Report -->
+        <div id="report-section" class="card">
+            <h2>Final Evaluation Report</h2>
+            <div class="report-content" id="report-content"></div>
+            <button class="btn" style="margin-top: 1.5rem;" onclick="location.reload()">New Interview</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = ''; // Same origin
+        let sessionId = null;
+
+        const uploadSection = document.getElementById('upload-section');
+        const chatSection = document.getElementById('chat-section');
+        const reportSection = document.getElementById('report-section');
+        
+        const fileInput = document.getElementById('file-input');
+        const dropZone = document.getElementById('drop-zone');
+        const startBtn = document.getElementById('start-btn');
+        
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const sendBtn = document.getElementById('send-btn');
+        const reportContent = document.getElementById('report-content');
+
+        // File Selection
+        dropZone.onclick = () => fileInput.click();
+        fileInput.onchange = (e) => {
+            if (e.target.files.length > 0) {
+                dropZone.querySelector('h3').innerText = e.target.files[0].name;
+            }
+        };
+
+        // Start Interview
+        startBtn.onclick = async () => {
+            const file = fileInput.files[0];
+            if (!file) {
+                alert("Please select a file first");
+                return;
+            }
+
+            startBtn.disabled = true;
+            startBtn.innerHTML = '<div class="loading-spinner"></div>';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`${API_URL}/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    sessionId = data.session_id;
+                    uploadSection.style.display = 'none';
+                    chatSection.style.display = 'flex';
+                    addMessage(data.message, 'agent');
+                } else {
+                    alert("Error: " + data.detail);
+                }
+            } catch (err) {
+                alert("Connection failed: " + err.message);
+            } finally {
+                startBtn.disabled = false;
+                startBtn.innerText = 'Analyze & Start Interview';
+            }
+        };
+
+        // Send Message
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            if (!text || !sessionId) return;
+
+            userInput.value = '';
+            addMessage(text, 'user');
+
+            // Show typing indicator
+            const typingMsg = addMessage('Thinking...', 'agent');
+            
+            try {
+                const response = await fetch(`${API_URL}/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        message: text
+                    })
+                });
+                const data = await response.json();
+                
+                typingMsg.remove();
+
+                if (response.ok) {
+                    if (data.type === 'report') {
+                        chatSection.style.display = 'none';
+                        reportSection.style.display = 'block';
+                        reportContent.innerText = data.message;
+                    } else {
+                        addMessage(data.message, 'agent');
+                    }
+                } else {
+                    addMessage("Error communicating with agent.", 'agent');
+                }
+            } catch (err) {
+                typingMsg.remove();
+                addMessage("Connection lost.", 'agent');
+            }
+        }
+
+        sendBtn.onclick = sendMessage;
+        userInput.onkeypress = (e) => {
+            if (e.key === 'Enter') sendMessage();
+        };
+
+        function addMessage(text, side) {
+            const div = document.createElement('div');
+            div.className = `message ${side}-msg`;
+            div.innerText = text;
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            return div;
+        }
+    </script>
+</body>
+</html>

@@ -9,8 +9,6 @@ def calculate_score(evaluation):
         return 0
     
     scores = []
-    # In evaluator_agent, the scorecard keys depend on the hr_scoring_tool output.
-    # Typically it has categories with 'score'.
     for key, value in evaluation.items():
         if isinstance(value, dict) and 'score' in value:
             scores.append(value['score'])
@@ -36,79 +34,60 @@ def decide_next_step(state):
         if avg_score < 5:
             return "followup"
 
-        # If we reached the target number of questions, end
+        # If we reached the target number of questions, end (User changed to 2)
         if state["question_index"] >= 2:
             return "end"
 
         return "ask"
 
     if last_action == "followup":
-        # After follow-up, evaluate the answer to the follow-up
         return "evaluate"
 
     return "end"
 
-async def orchestrator(state):
-    max_steps = 20
-    steps = 0
-
-    print("\n--- Interview Started ---")
-
-    while steps < max_steps:
-        steps += 1
+async def handle_next_step(state, user_answer=None):
+    """
+    State machine for the interview. 
+    Processes the user's last answer (if provided) and returns the next message for the UI.
+    Returns: (updated_state, message_type, message_content)
+    message_type: 'question', 'followup', 'report'
+    """
+    
+    # If there's a user answer, we need to update the state before deciding the next step
+    if user_answer is not None:
+        state["candidate_answer"] = user_answer
+        last_action = state.get("last_action")
+        
+        if last_action == "ask":
+            state["conversation_history"].append(f"Q: {state.get('current_question')}\nA: {user_answer}")
+        elif last_action == "followup":
+            state["conversation_history"].append(f"Follow-up Q: {state.get('current_question')}\nA: {user_answer}")
+            
+    # Run the loop until we hit a step that requires user input (ask/followup) or end
+    while True:
         step = decide_next_step(state)
 
         if step == "ask":
             question = await interviewer_agent(state)
-            print(f"\nInterviewer: {question}")
-            
-            answer = input("\nCandidate: ")
-            
             state["current_question"] = question
-            state["candidate_answer"] = answer
-            state["conversation_history"].append(f"Q: {question}\nA: {answer}")
             state["question_index"] += 1
             state["last_action"] = "ask"
+            return state, "question", question
 
         elif step == "evaluate":
-            print("\nEvaluating answer...")
             state = await evaluator_agent(state)
-            
-            evaluation = state.get("evaluation", {})
-            print("--- HR Screening Scorecard ---")
-            for category, result in evaluation.items():
-                if isinstance(result, dict):
-                    print(f"{category}: Score {result.get('score', 0)}/10 - {result.get('feedback', 'N/A')}")
-                else:
-                    print(f"{category}: {result}")
-            
             state["last_action"] = "evaluate"
+            # Continue loop to next step immediately after evaluation
 
         elif step == "followup":
             question = await followup_agent(state)
-            print(f"\nFollow-up: {question}")
-            
-            answer = input("\nCandidate: ")
-            
-            state["candidate_answer"] = answer
-            state["conversation_history"].append(f"Follow-up Q: {question}\nA: {answer}")
-            # Note: We don't increment question_index for follow-up in the user's pseudo-code logic,
-            # or maybe we should? The pseudo-code had `state["question_index"] += 1` in followup too.
-            # I will follow the pseudo-code.
+            state["current_question"] = question
             state["question_index"] += 1
             state["last_action"] = "followup"
+            return state, "followup", question
 
         elif step == "end":
-            print("\nGenerating final report...")
             state = await report_agent(state)
-            
-            report = state.get("final_report")
-            print("\n--- FINAL CANDIDATE EVALUATION REPORT ---")
-            print(report)
-            print("------------------------------------------")
-            break
-
-    if steps >= max_steps:
-        print("\nReached max steps guard. Ending interview.")
-
-    return state
+            state["last_action"] = "end"
+            state["interview_complete"] = True
+            return state, "report", state.get("final_report")
