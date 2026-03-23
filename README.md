@@ -1,33 +1,35 @@
 # Technical Interview Agent
 
-Multi-agent AI system that conducts technical interviews, evaluates answers, and provides feedback using LLMs, LangGraph, and RAG.
+A multi-agent AI system built with **FastAPI**, **LangGraph**, and **MCP** (Model Context Protocol). This agent conducts automated technical interviews (with an HR screening persona), evaluates candidate responses, asks intelligent follow-up questions, and generates comprehensive final reports.
 
-## Features
+## 🚀 Features
 
-- **Multi-Agent Architecture**: Uses specialized agents for different tasks
-- **Domain-Specific Questions**: Generates questions based on job role and resume
-- **RAG-Powered Knowledge Base**: Retrieves relevant information from question banks
-- **Follow-up Questions**: Asks intelligent follow-up questions based on answers
-- **Comprehensive Evaluation**: Scores answers and provides detailed feedback
-- **MCP Integration**: Exposes tools through an MCP server
+- **Multi-Agent Orchestration**: Specialized agents for resume analysis, interviewing, evaluation, follow-up, and reporting.
+- **Web Interface**: Modern FastAPI-backend with a clean chat interface for candidates.
+- **MCP Architecture**: Decoupled tool execution using Model Context Protocol (MCP) Client-Server model.
+- **Autonomous Flow**: State-machine driven interview logic that adapts based on candidate performance.
+- **RAG Integration**: Project-specific knowledge retrieval using Chroma vector store.
+- **Automated Reporting**: Generates a detailed PDF-ready evaluation report at the end of the session.
 
-## Project Structure
+## 📁 Project Structure
 
-```
+```text
 technical-interview-agent/
-├── agents/                  # AI agents (interviewer, evaluator, etc.)
-├── nodes/                   # LangGraph nodes
-├── graphs/                  # LangGraph workflows
-├── states/                  # State management
-├── tools/                   # Custom tools
-├── mcp_server/              # MCP server implementation
-├── data/                    # Data files
-├── .env                     # Environment variables
-├── requirements.txt         # Dependencies
-└── README.md                # Project documentation
+├── agents/              # Specialized AI agents (LLM prompts & logic)
+├── mcp_server/          # MCP Server implementation (Tools exposure)
+├── nodes/               # LangGraph/Workflow nodes
+├── services/            # RAG, Vector Store, and Ingestion services
+├── states/              # TypedDict state management
+├── static/              # Frontend web assets (HTML/JS/CSS)
+├── tools/               # Core tool implementations
+├── app.py               # CLI entry point (Asynchronous)
+├── main.py              # FastAPI Web entry point
+├── orchestrator.py      # Core interview state machine logic
+├── mcp_client.py        # MCP Client for tool communication
+└── .env                 # Environment configuration
 ```
 
-## Installation
+## 🛠️ Installation
 
 1. **Clone the repository**
    ```bash
@@ -35,108 +37,65 @@ technical-interview-agent/
    cd technical-interview-agent
    ```
 
-2. **Create a virtual environment**
+2. **Setup Virtual Environment**
    ```bash
    python -m venv .venv
+   source .venv/bin/activate  # Linux/macOS
+   .venv\Scripts\activate     # Windows
    ```
 
-3. **Activate the virtual environment**
-   - Windows:
-     ```bash
-     .venv\Scripts\activate
-     ```
-   - macOS/Linux:
-     ```bash
-     source .venv/bin/activate
-     ```
-
-4. **Install dependencies**
+3. **Install Dependencies**
    ```bash
    pip install -r requirements.txt
    ```
 
-5. **Configure environment variables**
-   Create a `.env` file in the root directory with the following variables:
+4. **Environment Variables**
+   Create a `.env` file in the root:
    ```env
-   OPENAI_API_KEY=your_openai_api_key
-   GROQ_API_KEY=your_groq_api_key
+   OPENAI_API_KEY=your_key
+   GROQ_API_KEY=your_key
+   MODEL_NAME=gpt-4o  # or your preferred model
    ```
 
-## Usage
+## 🏃 Usage
 
-### Run the Interview
+The system requires the **MCP Server** to be running for tool access.
 
-```bash
-python run_interview.py
-```
-
-### Start MCP Server
-
+### 1. Start the MCP Server
+In a separate terminal:
 ```bash
 python mcp_server/mcp_server.py
 ```
 
-## Configuration
+### 2. Run the Web Application
+```bash
+python main.py
+```
+Visit `http://localhost:8000` to start the interview.
 
-### Interview Parameters
+### 3. Run the CLI Version (Optional)
+```bash
+python app.py
+```
 
-Edit `run_interview.py` to configure:
-- `job_role`: Job title for the interview
-- `resume_path`: Path to candidate's resume
-- `num_questions`: Number of questions to ask
-- `domain`: Interview domain (e.g., "software_engineering")
+## 🧠 Architecture
 
-### Agent Configuration
+### Multi-Agent Flow
+The `orchestrator.py` manages the transition between different agents:
+1.  **Resume Analyzer**: Parses and extracts key skills/projects.
+2.  **Interviewer Agent**: Asks technical/HR questions based on context.
+3.  **Evaluator Agent**: Analyzes the answer and provides a score (1-10).
+4.  **Follow-up Agent**: If the score is low (< 5), it asks a deeper clarification question.
+5.  **Report Agent**: Consolidates the full interview history into a summary report.
 
-Edit agent files in `agents/` to customize:
-- LLM model selection
-- System prompts
-- Tool usage
+### MCP Integration
+This project uses the **Model Context Protocol** (MCP) to separate the LLM reasoning from tool execution. The agents communicate with the `mcp_server` through the `mcp_client`, allowing for scalable and modular tool management.
 
-## Tools
+## 📝 Configuration
 
-The system includes the following tools:
+-   **Interview Depth**: Default is set to 2 main questions per session (configurable in `orchestrator.py`).
+-   **Persona**: The `interviewer_agent` is currently tuned for an **HR Screening** persona.
 
-| Tool | Description |
-|------|-------------|
-| `resume_parser_tool` | Parses candidate resumes |
-| `question_bank_tool` | Retrieves questions from knowledge base |
-| `vector_search_tool` | Searches vector database for relevant information |
-| `scoring_tool` | Scores answers and provides feedback |
+## 📄 License
 
-## MCP Server
-
-The MCP server exposes the following tools for use with other MCP clients:
-
-- `resume_parser.parse_resume` - Parse a resume file
-- `question_bank.get_questions` - Get interview questions
-- `vector_search.search` - Search vector database
-- `scoring.score_answer` - Score a candidate's answer
-
-## Development
-
-### Adding New Tools
-
-1. Create a new tool in `tools/`
-2. Register the tool in `mcp_server/tools_registry.py`
-3. Update `mcp_server/mcp_server.py` to include the tool
-
-### Creating New Agents
-
-1. Create a new agent file in `agents/`
-2. Define the agent using `langgraph.prebuilt.create_react_agent`
-3. Update `graphs/interview_graph.py` to include the agent
-
-### Adding New Nodes
-
-1. Create a new node function in `nodes/`
-2. Register the node in `graphs/interview_graph.py`
-3. Update the workflow to include the node
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## Support
-
-For issues or questions, please open an issue in the repository.
+MIT License. See [LICENSE](LICENSE) for details.
