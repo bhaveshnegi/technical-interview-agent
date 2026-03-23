@@ -1,6 +1,6 @@
 # Technical Interview Agent
 
-A multi-agent AI system built with **FastAPI**, **LangGraph**, and **MCP** (Model Context Protocol). This agent conducts automated technical interviews (with an HR screening persona), evaluates candidate responses, asks intelligent follow-up questions, and generates comprehensive final reports.
+Built a multi-agent AI interview system with a state-driven orchestration engine, leveraging **MCP** for modular tool execution and **RAG** for context-aware questioning, enabling adaptive interviews, response evaluation, and automated feedback/report generation via a **FastAPI** based backend.
 
 ## 🚀 Features
 
@@ -17,7 +17,7 @@ A multi-agent AI system built with **FastAPI**, **LangGraph**, and **MCP** (Mode
 technical-interview-agent/
 ├── agents/              # Specialized AI agents (LLM prompts & logic)
 ├── mcp_server/          # MCP Server implementation (Tools exposure)
-├── nodes/               # LangGraph/Workflow nodes
+├── nodes/               # Workflow nodes
 ├── services/            # RAG, Vector Store, and Ingestion services
 ├── states/              # TypedDict state management
 ├── static/              # Frontend web assets (HTML/JS/CSS)
